@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %} 权限管理 {% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        h2 {
+            display: inline;
+            padding-right: 10px;
+        }
+        table {
+            margin-top: 30px;
+        }
+        /*table { table-layout:fixed; word-break: break-all; word-wrap: break-word; }  */
+    </style>
+{% endblock %}
+
+{% block page_content %}
+    <div>
+        <h2>权限列表</h2><label><a href="{{ url_for('user_control.permission_create') }}">添加</a></label>
+        <table class="table table-hover">
+            <tr>
+                <th>权限</th>
+                <th>操作类型</th>
+                <th>创建时间</th>
+                <th width="50%">菜单</th>
+                <th>操作</th>
+            </tr>
+            {% for permission in permissions %}
+                <tr>
+                    <td>{{ permission.name }}</td>
+                    <td>{{ permission.operation_type }}</td>
+                    <td>{{ permission.create }}</td>
+                    <td>{{ permission.menus|join(", ", attribute="title") }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a type="button" class="btn btn-primary btn-xs"
+                               href="{{ url_for('user_control.permission_update', id=permission.id) }}">修改</a>
+                            <button id="delete" permission_id="{{ permission.id }}" class="btn btn-danger btn-xs">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(document).on("click","#delete",function() {
+            var permission_id = this.getAttribute("permission_id");
+            swal({
+                    title: "是否删除?",
+                    text: "删除用户",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    cancelButtonText: "取消",
+                    confirmButtonText: "确定",
+                    closeOnConfirm: false
+                },
+                function(){
+                    $.ajax({
+                        url: "{{ url_for('user_control.permission_delete') }}",
+                        type: "post",
+                        data: permission_id,
+                        success: function() {
+                            location.reload()
+                        },
+                        error: function(res) {
+                            if (res.status == 403) {
+                                swal("权限不足", "没有操作权限", "error")
+                            } else {
+                                swal("Error", "Something Error, Please contact Admin.", "error")
+                            }
+                        }
+                    });
+                }
+            );
+        });
+    </script>
+{% endblock %}

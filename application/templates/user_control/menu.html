@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %} 菜单管理 {% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        h2 {
+            display: inline;
+            padding-right: 10px;
+        }
+        table {
+            margin-top: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
+    <div>
+        <h2>菜单列表</h2><label><a href="{{ url_for('user_control.menu_create') }}">添加</a></label>
+        <table class="table table-hover">
+            <tr>
+                <th>菜单</th>
+                <th>显示名称</th>
+                <th>父菜单</th>
+                <th>URL地址</th>
+                <th>显示顺序</th>
+                <th>操作</th>
+            </tr>
+            {% for menu in menus %}
+                <tr>
+                    <td>{{ menu.name }}</td>
+                    <td>{{ menu.title }}</td>
+                    <td>{{ Menu.query.filter_by(id=menu.pid).first().title }}</td>
+                    <td>{{ menu.url }}</td>
+                    <td>{{ menu.display_order }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a type="button" class="btn btn-primary btn-xs"
+                               href="{{ url_for('user_control.menu_update', id=menu.id) }}">修改</a>
+                            <button id="delete" menu_id="{{ menu.id }}" class="btn btn-danger btn-xs">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(document).on("click","#delete",function() {
+            var menu_id = this.getAttribute("menu_id");
+            swal({
+                    title: "是否删除?",
+                    text: "删除用户",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    cancelButtonText: "取消",
+                    confirmButtonText: "确定",
+                    closeOnConfirm: false
+                },
+                function(){
+                    $.ajax({
+                        url: "{{ url_for('user_control.menu_delete') }}",
+                        type: "post",
+                        data: menu_id,
+                        success: function() {
+                            location.reload()
+                        },
+                        error: function(res) {
+                            if (res.status == 403) {
+                                swal("权限不足", "没有操作权限", "error")
+                            } else {
+                                swal("Error", "Something Error, Please contact Admin.", "error")
+                            }
+                        }
+                    });
+                }
+            );
+        });
+    </script>
+{% endblock %}

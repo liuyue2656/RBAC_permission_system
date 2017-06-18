@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %} 用户管理 {% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        h2 {
+            display: inline;
+            padding-right: 10px;
+        }
+        table {
+            margin-top: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
+    <div>
+        <h2>用户列表</h2><label><a href="{{ url_for('user_control.user_create') }}">添加</a></label>
+        <table class="table table-hover">
+            <tr>
+                <th>Email</th>
+                <th>用户名</th>
+                <th>手机号码</th>
+                <th>是否启用</th>
+                <th>权限所属</th>
+                <th>最后登录</th>
+                <th>操作</th>
+            </tr>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.tel_num }}</td>
+                    <td>{{ user.status }}</td>
+                    <td>{{ user.roles|join(", ", attribute="display_name") }}</td>
+                    <td>{{ user.last }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a type="button" class="btn btn-primary btn-xs"
+                               href="{{ url_for('user_control.user_update', id=user.id) }}">修改</a>
+                            <!-- <button id="" user_id="{{ user.id }}" class="btn btn-warning btn-xs">重置密码</button> -->
+                            <button id="delete" user_id="{{ user.id }}" class="btn btn-danger btn-xs">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(document).on("click","#delete",function() {
+            var user_id = this.getAttribute("user_id");
+            console.log(user_id);
+            swal({
+                    title: "是否删除?",
+                    text: "删除用户",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    cancelButtonText: "取消",
+                    confirmButtonText: "确定",
+                    closeOnConfirm: false
+                },
+                function(){
+                    console.log(user_id);
+                    $.ajax({
+                        url: "{{ url_for('user_control.user_delete') }}",
+                        type: "post",
+                        data: user_id,
+                        success: function() {
+                            location.reload()
+                        },
+                        error: function(res) {
+                            if (res.status == 403) {
+                                swal("权限不足", "没有操作权限", "error")
+                            } else {
+                                swal("Error", "Something Error, Please contact Admin.", "error")
+                            }
+                        }
+                    });
+                }
+            );
+        });
+        // $(document).on("click","#update",function() {
+        //     $.ajax({
+        //         url: "{{ url_for('user_control.user_update') }}",
+        //         type: "post",
+        //         data: this.getAttribute("user_id"),
+        //         success: function(res) {
+        //             $("#myModal .modal-content").html(res);
+        //             $("#myModal").modal("toggle")
+        //         }
+        //     });
+        // });
+    </script>
+{% endblock %}

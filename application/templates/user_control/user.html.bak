@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %} 用户管理 {% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <style>
+        h2 {
+            display: inline;
+            padding-right: 10px;
+        }
+        table {
+            margin-top: 30px;
+        }
+    </style>
+{% endblock %}
+
+{% block page_content %}
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+    <div id="flush">
+        <h2>{{ form.__doc__.strip() }}</h2><label><a id="insert">添加</a></label>
+        <table class="table table-hover">
+            <tr>
+                {%- for field in form %}
+                    {% if field.name not in ("submit", "csrf_token", "password", "password2") -%}
+                        <th>{{ field.label.text }}</th>
+                    {%- endif %}
+                {%- endfor %}
+                <th>操作</th>
+            </tr>
+            {% for data in data_list %}
+                <tr>
+                    {%- for field in form %}
+                        {% if field.name not in ("submit", "csrf_token", "password", "password2") -%}
+                            {% if field.name == "roles" %}
+                                <td>{{ getattr(data, field.name)|join(", ", attribute="display_name") }}</td>
+                            {% else %}
+                                <td>{{ getattr(data, field.name) }}</td>
+                            {% endif %}
+                        {%- endif %}
+                    {%- endfor %}
+                    <td>
+                        <div class="btn-group">
+                            <button id="update" data_id="{{ data.id }}" class="btn btn-primary btn-xs">修改</button>
+                            <button id="delete" data_id="{{ data.id }}" class="btn btn-danger btn-xs">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script>
+        $(document).on("click","#insert",function() {
+            $.ajax({
+                url: "{{ url_for('user_control.user_create') }}",
+                type: "get",
+                success: function(res) {
+                    $("#myModal .modal-content").html(res);
+                    $("#myModal").modal("toggle")
+                },
+                error: function(res) {
+                    if (res.status == 403) {
+                        swal("权限不足", "没有操作权限", "error")
+                    } else {
+                        swal("Error", "Something Error, Please contact Admin.", "error")
+                    }
+                }
+            });
+        });
+        $(document).on("click","#delete",function() {
+            var data_id = this.getAttribute("data_id");
+            swal({
+                    title: "是否删除?",
+                    text: "删除用户",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    cancelButtonText: "取消",
+                    confirmButtonText: "确定",
+                    closeOnConfirm: false
+                },
+                function(){
+                    $.ajax({
+                        url: "{{ url_for('user_control.user_delete') }}",
+                        type: "post",
+                        data: data_id,
+                        success: function() {
+                            location.reload()
+                        },
+                        error: function(res) {
+                            if (res.status == 403) {
+                                swal("权限不足", "没有操作权限", "error")
+                            } else {
+                                swal("Error", "Something Error, Please contact Admin.", "error")
+                            }
+                        }
+                    });
+                }
+            );
+        });
+        $(document).on("click","#update",function() {
+            $.ajax({
+                url: "{{ url_for('user_control.user_update') }}",
+                type: "post",
+                data: this.getAttribute("data_id"),
+                success: function(res) {
+                    $("#myModal .modal-content").html(res);
+                    $("#myModal").modal("toggle")
+                }
+            });
+        });
+        $(document).on("submit", function(){
+            console.log("test");
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'bootstrap/base.html' %}
+{% import "bootstrap/wtf.html" as wtf%}
+
+{% block metas %}
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+{% endblock %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block styles %}
+    <link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet" >
+    <link href="{{url_for('static', filename='css/dashboard.css')}}" rel="stylesheet" >
+    <link href="{{url_for('static', filename='css/sweetalert.css')}}" rel="stylesheet" >
+    <link href="{{url_for('static', filename='images/favicon.ico')}}" rel="icon" >
+{% endblock %}
+
+{% block navbar %}
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed"
+                        data-toggle="collapse" data-target="#navbar"
+                        aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+
+                <a class="navbar-brand" href="/dashboard/">千丁OPS</a>
+            </div>
+
+            <div id="navbar" class="navbar-collapse collapse">
+
+                <ul class="nav navbar-nav navbar-right">
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('user_control.change_password') }}">{{ current_user.username }}</a></li>
+                    <li><a href="{{ url_for('auth.logout') }}">退出登录</a></li>
+                    {% endif %}
+                </ul>
+
+                <form class="navbar-form navbar-right">
+                    <input type="text" class="form-control"
+                        placeholder="Search...">
+                </form>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-2 col-md-2 sidebar" id="nav_string"></div>
+
+            <div class="col-sm-10 col-sm-offset-2 col-md-10 col-md-offset-2 main">
+                {% for message in get_flashed_messages() %}
+                    <div class="alert alert-warning">
+                        <button
+                            type="button"
+                            class="close"
+                            data-dismiss="alert"
+                        >&times;</button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+                {% block page_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{url_for('static', filename='js/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/socket.io.min.js')}}"></script>
+    <script src="{{url_for('static', filename='js/sweetalert.min.js')}}"></script>
+    <script type="text/javascript">
+        // 生成导航栏内容
+        var sidebar = {{ current_user.generate_menu()|safe }};
+        var nav_string = "";
+        for(var index in sidebar){
+            if (typeof(sidebar[index][1]) == "string") {
+                nav_string += '<ul class="nav nav-sidebar">' +
+                        '<li><a href="' + sidebar[index] + '">' + index + '</a></li>' +
+                        '</ul>';
+            }
+            else {
+                nav_string += '<ul class="nav nav-sidebar">' +
+                        '<li class="hide-list"><a>' + index + '</a></li>' +
+                        '<ul>';
+                for (var child in sidebar[index]){
+                    nav_string += '<li>' +
+                            '<a href="' + sidebar[index][child] + '">' + child + '</a>' +
+                            '</li>';
+                }
+                nav_string += '</ul></ul>';
+            }
+        }
+        
+        $("#nav_string").html(nav_string);
+    </script>
+
+    <script type="text/javascript">
+        // hide-list添加点击事件，点击隐藏/显示
+        $(".hide-list").on("click", function(){
+            $(this).next("ul").toggle(function(){
+                $(this).next().show();
+            });
+        });
+
+        // 为当前页面导航添加active
+        var uri = window.location.pathname;
+        $("li [href='" + uri + "']").parent().addClass("active");
+        $(".active").parent().prev("li").addClass("active");
+
+        // class = active时不隐藏
+        $(".active").parent().css("display", "block");
+    </script>
+{% endblock %}
